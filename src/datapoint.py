@@ -1,4 +1,9 @@
+import math
+
 import pandas as pd
+from matplotlib import pyplot as plt
+
+plt.style.use('ggplot')
 
 
 SENSOR_READING_COLUMNS = {
@@ -54,7 +59,8 @@ class DataPoint:
     def _get_sensor_data(self, sensor):
         return self.data_dict[sensor]
 
-    def at(self, t, reset_index=False, sensors=[]):
+    def get_readings_by_time(self, t1, t2=None, position='at', sensors=[],
+                             reset_index=False, include_extremes=False):
         if len(sensors) == 0:
             data_dict = self.data_dict
         else:
@@ -62,55 +68,81 @@ class DataPoint:
                 assert sensor in self.data_dict, f'{sensor} not in data_dict'
             data_dict = {
                 sensor: self.data_dict[sensor] for sensor in sensors}
-        data_at_t = {}
+        data = {}
         for sensor, df in data_dict.items():
-            rows = df[df.Time == t]
+            if position == 'at':
+                rows = df[df.Time == t1]
+            elif position == 'bw':
+                assert not isinstance(t2, type(None))
+                if include_extremes:
+                    rows = df[(df.Time >= t1) & (df.Time <= t2)]
+                else:
+                    rows = df[(df.Time > t1) & (df.Time < t2)]
+            elif position == 'after':
+                if include_extremes:
+                    rows = df[df.Time >= t1]
+                else:
+                    rows = df[df.Time > t1]
+            elif position == 'before':
+                if include_extremes:
+                    rows = df[df.Time <= t1]
+                else:
+                    rows = df[df.Time < t1]
             if len(rows) > 0:
                 if reset_index:
                     rows = rows.reset_index(drop=True)
-                data_at_t[sensor] = rows
-        if len(sensors) == 1 and sensors[0] in data_at_t:
-            return data_at_t[sensors[0]]
-        return data_at_t
+                data[sensor] = rows
+        if len(sensors) == 1 and sensors[0] in data:
+            return data[sensors[0]]
+        if len(data) == 0:
+            return None
+        return data
 
-    def bw(self, t1, t2, include_extremes=False, reset_index=False):
-        data_bw = {}
-        for sensor, df in self.data_dict.items():
-            if include_extremes:
-                rows = df[(df.Time >= t1) & (df.Time <= t2)]
-            else:
-                rows = df[(df.Time > t1) & (df.Time < t2)]
-            if len(rows) > 0:
-                if reset_index:
-                    rows = rows.reset_index(drop=True)
-                data_bw[sensor] = rows
-        return data_bw
+    def at(self, t, reset_index=False, sensors=[]):
+        return self.get_readings_by_time(t, position='at', sensors=sensors,
+                                         reset_index=reset_index)
 
-    def after(self, t, include_extremes=False, reset_index=False):
-        data_after = {}
-        for sensor, df in self.data_dict.items():
-            if include_extremes:
-                rows = df[df.Time >= t]
-            else:
-                rows = df[df.Time > t]
-            if len(rows) > 0:
-                if reset_index:
-                    rows = rows.reset_index(drop=True)
-                data_after[sensor] = rows
-        return data_after
+    def bw(self, t1, t2, include_extremes=False, reset_index=False, sensors=[]):
+        return self.get_readings_by_time(t1, t2, position='bw',
+                                         sensors=sensors, reset_index=reset_index)
 
-    def before(self, t, include_extremes=False, reset_index=False):
-        data_before = {}
-        for sensor, df in self.data_dict.items():
-            if include_extremes:
-                rows = df[df.Time <= t]
-            else:
-                rows = df[df.Time < t]
-            if len(rows) > 0:
-                if reset_index:
-                    rows = rows.reset_index(drop=True)
-                data_before[sensor] = rows
-        return data_before
+    def after(self, t, include_extremes=False, reset_index=False, sensors=[]):
+        return self.get_readings_by_time(t, position='after', sensors=sensors,
+                                         reset_index=reset_index)
+
+    def before(self, t, include_extremes=False, reset_index=False, sensors=[]):
+        return self.get_readings_by_time(t, position='before', sensors=sensors,
+                                         reset_index=reset_index)
+
+    def _plot(self, sensor='Bluetooth', df=None, t1=None, t2=None, include_extremes=False):
+        if t1 and t2:
+            df = self.bw(t1, t2, include_extremes=include_extremes,
+                         sensors=[sensor])
+        else:
+            if isinstance(df, type(None)):
+                df = self._get_sensor_data(sensor)
+
+        self._plot_df(df)
+
+    def _plot_df(self, df):
+        readings = [col for col in df.columns if col not in [
+            'Accuracy', 'Sensor', 'Time']]
+        nrows = int(math.ceil(len(readings) / 2))
+        fig, ax = plt.subplots(nrows=nrows, ncols=2, sharex=False,
+                               sharey=False, figsize=(16, 6*nrows))
+        ax = ax.flatten()
+        if len(ax) > len(readings):
+            fig.delaxes(ax[-1])
+        title = df.Sensor.sample().item()
+        if len(readings) > 1:
+            fig.suptitle(title)
+        else:
+            ax[0].set_title(title)
+        for _ax, reading in zip(ax, readings):
+            _ax.scatter(df.Time, df[reading])
+            _ax.set_xlabel('Time')
+            _ax.set_ylabel(reading)
+        plt.show()
 
     @ property
     def bluetooth(self):
