@@ -50,11 +50,22 @@ def read_csv(filepath, sensors=[]):
     return data
 
 
+def read_non_sensor_data(filepath):
+    lines = open(filepath).read().split('\n')[:7]
+    nsdata = {}
+    for line in lines:
+        key, value = line.split(',')
+        nsdata[key] = value
+
+    return nsdata
+
+
 class DataPoint:
 
     def __init__(self, filepath, _type="train"):
         self.filepath = filepath
         self.data_dict = read_csv(filepath)
+        self.nsdata_dict = read_non_sensor_data(filepath)
 
     def _get_sensor_data(self, sensor):
         return self.data_dict[sensor]
@@ -175,3 +186,31 @@ class DataPoint:
     @ property
     def heading(self):
         return self._get_sensor_data('Heading')
+
+    @ property
+    def TXDevice(self):
+        return self.nsdata_dict['TXDevice']
+
+    @ property
+    def RXDevice(self):
+        return self.nsdata_dict['RXDevice']
+
+    @ property
+    def TXPower(self):
+        return self.nsdata_dict['TXPower']
+
+    @ property
+    def TXCarry(self):
+        return self.nsdata_dict['TXCarry']
+
+    @ property
+    def RXCarry(self):
+        return self.nsdata_dict['RXCarry']
+
+    @ property
+    def RXPose(self):
+        return self.nsdata_dict['RXPose']
+
+    @ property
+    def TXPose(self):
+        return self.nsdata_dict['TXPose']
