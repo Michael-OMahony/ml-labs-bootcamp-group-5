@@ -20,7 +20,8 @@ SENSOR_READING_COLUMNS = {
 
 
 def read_csv(filepath, sensors=[]):
-    lines = open(filepath).read().split('\n')[7:]
+    filedump = open(filepath).read()
+    lines = filedump.split('\n')[7:]
     if len(sensors) == 0:
         sensors = list(SENSOR_READING_COLUMNS.keys())
     data = {}
@@ -47,11 +48,12 @@ def read_csv(filepath, sensors=[]):
         data[sensor] = pd.DataFrame(data[sensor], columns=columns)
         data[sensor] = data[sensor].astype(_dtype_dict)
 
-    return data
+    nsdata = read_non_sensor_data(filedump)
+    return data, nsdata
 
 
-def read_non_sensor_data(filepath):
-    lines = open(filepath).read().split('\n')[:7]
+def read_non_sensor_data(filedump):
+    lines = filedump.split('\n')[:7]
     nsdata = {}
     for line in lines:
         key, value = line.split(',')
@@ -64,8 +66,7 @@ class DataPoint:
 
     def __init__(self, filepath, _type="train"):
         self.filepath = filepath
-        self.data_dict = read_csv(filepath)
-        self.nsdata_dict = read_non_sensor_data(filepath)
+        self.data_dict, self.nsdata_dict = read_csv(filepath)
 
     def _get_sensor_data(self, sensor):
         return self.data_dict[sensor]
