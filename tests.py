@@ -16,3 +16,13 @@ def test_20t6():
     aggregate_features_from_folder(
         folder, key, feat_fn=t62020.extract_features_from_file,
         postproc_fn=t62020.postproc_feature_frame)
+
+
+def test_devset():
+    key = pd.read_csv(
+        'data/tc4tl_data_v5/tc4tl/docs/tc4tl_dev_key.tsv', sep='\t')
+    folder = 'data/tc4tl_data_v5/tc4tl/data/dev/'
+    aggregate_features_from_folder(
+        folder, key, feat_fn=t62020.extract_features_from_file,
+        postproc_fn=t62020.postproc_feature_frame,
+        predictors=t62020.PREDICTORS, target=t62020.TARGET)

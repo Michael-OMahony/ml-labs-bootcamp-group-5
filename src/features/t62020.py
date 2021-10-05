@@ -13,7 +13,7 @@ def distance_from_rssi(rssi, TX, N):
     return np.power(10, (TX - rssi) / (10 * N))
 
 
-def _extract_features_from_file(filepath, coarse_grain, distance):
+def _extract_features_from_file(filepath, coarse_grain, distance, fileid):
     filedump = open(filepath).read()
     ns = read_non_sensor_data(filedump)
     mean_rssi = np.array([float(line.split(',')[-1])
@@ -28,14 +28,16 @@ def _extract_features_from_file(filepath, coarse_grain, distance):
         'MeanRssi': mean_rssi,
         'CoarseGrain': coarse_grain,
         'PredictedDistance': pred_distance,
-        'Distance': str(distance.item())
+        'Distance': str(distance.item()),
+        'fileid': fileid.item()
     })
     return ns
 
 
 def extract_features_from_file(filepath, key):
     return _extract_features_from_file(
-        filepath, coarse_grain=key.coarse_grain.item(), distance=key.distance_in_meters)
+        filepath, coarse_grain=key.coarse_grain.item(),
+        distance=key.distance_in_meters, fileid=key.fileid)
 
 
 def postproc_feature_frame(feats):
