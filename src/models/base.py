@@ -46,3 +46,15 @@ def dual_evaluation(trainset, devset, predictors, target, save_system_output=Tru
         devset_system_output.to_csv(
             'data/system_output/dev_system_output.tsv', sep='\t', index=False)
     return report, devset_system_output
+
+
+def evaluate_prediction(devset, prediction, save_system_output=True):
+    report = classification_report(devset.Distance, prediction)
+    system_output = pd.DataFrame({
+        'fileid': devset['fileid'],
+        'distance': prediction
+    })
+    if save_system_output:
+        system_output.to_csv(
+            'data/system_output/dev_system_output.tsv', sep='\t', index=False)
+    return report, system_output
