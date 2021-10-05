@@ -28,26 +28,28 @@ def _extract_features_from_file(filepath, coarse_grain, distance, fileid):
         'MeanRssi': mean_rssi,
         'CoarseGrain': coarse_grain,
         'PredictedDistance': pred_distance,
-        'Distance': str(distance.item()),
-        'fileid': fileid.item()
+        'Distance': str(distance),
+        'fileid': fileid
     })
     return ns
 
 
 def extract_features_from_file(filepath, key):
     return _extract_features_from_file(
-        filepath, coarse_grain=key.coarse_grain.item(),
+        filepath, coarse_grain=key.coarse_grain,
         distance=key.distance_in_meters, fileid=key.fileid)
 
 
-def postproc_feature_frame(feats):
+def postproc_feature_frame(feats, encoders={}):
     if isinstance(feats, type([6, 9])):
         feats = pd.DataFrame(feats)
     # min-max scaling
-    encoders = {
-        'MeanRssi': MinMaxScaler(),
-        'PathLossAttenuation': MinMaxScaler()
-    }
+    if len(encoders) == 0:
+        encoders = {
+            'MeanRssi': MinMaxScaler(),
+            'PathLossAttenuation': MinMaxScaler()
+        }
+    # TODO: separate fit and transform | include prebuilt encoder
     feats['NormMeanRssi'] = encoders['MeanRssi'].fit_transform(
         feats['MeanRssi'].values.reshape(-1, 1)).reshape(-1)
     feats['NormPathLossAttenuation'] = encoders['PathLossAttenuation'].fit_transform(
