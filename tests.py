@@ -117,3 +117,19 @@ def test_ram2021():
     )
     feats = extract_features(filepath, key)
     print(feats)
+
+
+def test_ram2021_dev():
+    from src.features.ram2021 import extract_features
+    from src.features.ram2021 import postproc
+
+    key = pd.read_csv(
+        "data/tc4tl_data_v5/tc4tl/docs/tc4tl_dev_key.tsv", sep="\t")
+    folder = "data/tc4tl_data_v5/tc4tl/data/dev/"
+    aggregate_features_from_folder(
+        folder,
+        key,
+        feat_fn=extract_features,
+        postproc_fn=postproc,
+        testing=True,
+    )
