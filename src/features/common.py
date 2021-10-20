@@ -3,7 +3,7 @@ import pandas as pd
 TARGET = "Distance"
 
 
-def read_chirp_sequence_from_file(filepath):
+def read_chirp_sequence_from_file(filepath, max_chirps=None):
     """Return a sequence of values containing average RSSI reading of each chirp
     (Reads from file directly)
     """
@@ -19,6 +19,13 @@ def read_chirp_sequence_from_file(filepath):
                     chirp = []
             chirp.append(item)
             data.append(item)
+        if max_chirps:
+            if len(chirps) > max_chirps:
+                break
+    if len(chirps) == 0:
+        if not max_chirps:
+            max_chirps = 1
+        return [pd.DataFrame(chirp) for _ in range(max_chirps)]
     return [pd.DataFrame(chirp) for chirp in chirps]
 
 

@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pandas as pd
 from scipy.stats import trim_mean
@@ -5,6 +7,7 @@ from src.features.common import postproc_default, read_chirp_sequence_from_file
 
 
 def summary_stats(chirps, tunables={"trim_prop": 0.20}):
+
     q1 = [c.rssi.quantile(0.25) for c in chirps]
     q3 = [c.rssi.quantile(0.75) for c in chirps]
     summary = {
@@ -20,6 +23,15 @@ def summary_stats(chirps, tunables={"trim_prop": 0.20}):
         "Kurtosis": [c.rssi.kurtosis() for c in chirps],
         "Skew": [c.rssi.skew() for c in chirps],
     }
+    return summary
+
+
+def replace_na_with_row_mean(summary):
+    _mean = np.array([val for _, val in summary.items()
+                     if not math.isnan(val)]).mean()
+    for stat, value in summary.items():
+        if math.isnan(value):
+            summary[stat] = _mean
     return summary
 
 
@@ -40,7 +52,8 @@ def histogram(chirps, tunables={"bin_size": 5}):
 
 
 def extract_features(filepath, key):
-    chirps = read_chirp_sequence_from_file(filepath)
+    chirps = read_chirp_sequence_from_file(filepath, max_chirps=2)
+
     feats = {
         'Distance': str(key.distance_in_meters),
         'CoarseGrain': key.coarse_grain,
