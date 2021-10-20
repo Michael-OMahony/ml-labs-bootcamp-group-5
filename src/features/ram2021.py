@@ -3,11 +3,11 @@ import numpy as np
 import pandas as pd
 
 
-def summary_stats(chirps):
+def summary_stats(chirps, tunables={"trim_prop": 0.20}):
     q1 = [c.rssi.quantile(0.25) for c in chirps]
     q3 = [c.rssi.quantile(0.75) for c in chirps]
     summary = {
-        "TrimmedMean": [trim_mean(c.rssi) for c in chirps],
+        "TrimmedMean": [trim_mean(c.rssi, tunables["trim_prop"]) for c in chirps],
         "Mean": [c.rssi.mean() for c in chirps],
         "Median": [c.rssi.median() for c in chirps],
         "Q1": q1,
@@ -27,6 +27,4 @@ def histogram(chirps, tunables={"bin_size": 5}):
     bins = np.arange(-80, -40, tunables["bin_size"])
     counts, _ = np.histogram(rssi_values, bins=bins, density=True)
     center = (bins[:-1] + bins[1:]) / 2
-    return {
-        f"Hist_{-rssi}" : count for count, rssi in zip(counts, center)
-    }
+    return {f"Hist_{-rssi}": count for count, rssi in zip(counts, center)}
