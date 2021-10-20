@@ -27,7 +27,8 @@ def test_20t6():
 
 
 def test_devset():
-    key = pd.read_csv("data/tc4tl_data_v5/tc4tl/docs/tc4tl_dev_key.tsv", sep="\t")
+    key = pd.read_csv(
+        "data/tc4tl_data_v5/tc4tl/docs/tc4tl_dev_key.tsv", sep="\t")
     folder = "data/tc4tl_data_v5/tc4tl/data/dev/"
     aggregate_features_from_folder(
         folder,
@@ -57,7 +58,8 @@ def test_baseline():
 
 
 def test_baseline_dev():
-    key = pd.read_csv("data/tc4tl_data_v5/tc4tl/docs/tc4tl_dev_key.tsv", sep="\t")
+    key = pd.read_csv(
+        "data/tc4tl_data_v5/tc4tl/docs/tc4tl_dev_key.tsv", sep="\t")
     folder = "data/tc4tl_data_v5/tc4tl/data/dev/"
     aggregate_features_from_folder(
         folder,
@@ -103,4 +105,15 @@ def test_ram2021_histogram():
     chirps = read_chirp_sequence_from_file(filepath)
     feats = histogram(chirps, tunables={"bin_size": 3})
     assert len(feats) == 13
+    print(feats)
+
+
+def test_ram2021():
+    from src.features.ram2021 import extract_features
+
+    filepath = "data/tc4tl_training_data_v1/tc4tl/data/train/bnqefvro_tc4tl20.csv"
+    key = pd.read_csv(
+        "data/tc4tl_training_data_v1/tc4tl/docs/tc4tl_train_key.tsv", sep="\t"
+    )
+    feats = extract_features(filepath, key)
     print(feats)

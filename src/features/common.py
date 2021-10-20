@@ -22,3 +22,7 @@ def read_chirp_sequence_from_file(filepath):
             chirp.append(item)
             data.append(item)
     return [pd.DataFrame(chirp) for chirp in chirps]
+
+
+def postproc_default(feats, encoders={}):
+    return pd.DataFrame(feats), encoders

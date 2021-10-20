@@ -1,6 +1,7 @@
-from scipy.stats import trim_mean
 import numpy as np
 import pandas as pd
+from scipy.stats import trim_mean
+from src.features.common import postproc_default, read_chirp_sequence_from_file
 
 
 def summary_stats(chirps, tunables={"trim_prop": 0.20}):
@@ -22,9 +23,35 @@ def summary_stats(chirps, tunables={"trim_prop": 0.20}):
     return summary
 
 
+def expand_summary(summary):
+    expanded_summary = {}
+    for name, vector in summary.items():
+        for i, value in enumerate(vector):
+            expanded_summary[f"{name}_{i}"] = value
+    return expanded_summary
+
+
 def histogram(chirps, tunables={"bin_size": 5}):
     rssi_values = pd.concat([c.rssi for c in chirps], axis=0).values
     bins = np.arange(-80, -40, tunables["bin_size"])
     counts, _ = np.histogram(rssi_values, bins=bins, density=True)
     center = (bins[:-1] + bins[1:]) / 2
     return {f"Hist_{-rssi}": count for count, rssi in zip(counts, center)}
+
+
+def extract_features(filepath, key):
+    chirps = read_chirp_sequence_from_file(filepath)
+    feats = {
+        'Distance': str(key.distance_in_meters),
+        'CoarseGrain': key.coarse_grain,
+        'fileid': key.fileid
+    }
+    summary = expand_summary(
+        summary_stats(chirps, tunables={"trim_prop": 0.2}))
+    feats.update(summary)
+    feats.update(histogram(chirps, tunables={"bin_size": 3}))
+    return feats
+
+
+def postproc(feats, encoders={}):
+    return postproc_default(feats)
