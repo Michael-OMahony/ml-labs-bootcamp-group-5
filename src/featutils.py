@@ -7,14 +7,18 @@ from tqdm import tqdm
 
 def aggregate_features_from_folder(folder, key, feat_fn,
                                    postproc_fn, predictors=None,
-                                   target=None, encoders={}, testing=False):
+                                   target=None, encoders={}, testing=False,
+                                   tunables={}, verbose=False):
     features = []
     # for filename in tqdm(files, total=len(files)):
-    _key = key.sample(100) if testing else key
-    for _, row in tqdm(_key.iterrows(), total=_key.shape[0]):
+    sample_size = min(1000, key.shape[0])
+    _key = key.sample(sample_size) if testing else key
+    iterate_through = tqdm(
+        _key.iterrows(), total=_key.shape[0]) if verbose else _key.iterrows()
+    for _, row in iterate_through:
         filepath = os.path.join(folder, row.fileid)
-        features.append(feat_fn(filepath, row))
-    df, encoders = postproc_fn(features, encoders=encoders)
+        features.append(feat_fn(filepath, row, tunables=tunables))
+    df, encoders = postproc_fn(features, encoders=encoders, tunables=tunables)
     if isinstance(predictors, type(None)):
         return df, encoders
     if not isinstance(predictors, type([6, 9])):

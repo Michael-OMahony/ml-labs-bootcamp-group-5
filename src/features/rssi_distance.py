@@ -10,7 +10,7 @@ def distance_from_rssi(rssi, TX=-61.02, N=2.187):
 #    return np.power(10, (TX - rssi) / (10 * N))
 
 
-def extract_feature(filepath, key):
+def extract_feature(filepath, key, tunables={}):
     rssi = [float(line.split(',')[-1])
             for line in open(filepath).read().split('\n')
             if 'Bluetooth' in line]
@@ -24,17 +24,24 @@ def extract_feature(filepath, key):
     }
 
 
-def extract_feature2(filepath, key):
+def extract_feature2(filepath, key, tunables={}):
     rssi = [float(line.split(',')[-1])
             for line in open(filepath).read().split('\n')
             if 'Bluetooth' in line]
+    _mean_rssi = np.array(rssi).mean()
+    if len(tunables) == 0:
+        tunables = {
+            "TX": -61.02, "N": 2.187
+        }
+    predicted_distance = distance_from_rssi(
+        _mean_rssi, tunables["TX"], tunables["N"])
     return {
-        'PredictedDistance': distance_from_rssi(np.array(rssi).mean(),),
+        'PredictedDistance': predicted_distance,
         'Distance': str(key.distance_in_meters),
         'CoarseGrain': key.coarse_grain,
         'fileid': key.fileid
     }
 
 
-def postproc_feature_dicts(feats, encoders={}):
+def postproc_feature_dicts(feats, encoders={}, tunables={}):
     return pd.DataFrame(feats), encoders
