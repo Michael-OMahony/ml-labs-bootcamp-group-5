@@ -1,7 +1,7 @@
 from hpsklearn import HyperoptEstimator
 from sklearn.ensemble import (AdaBoostClassifier, BaggingClassifier,
                               ExtraTreesClassifier, GradientBoostingClassifier,
-                              RandomForestClassifier)
+                              RandomForestClassifier, RandomForestRegressor)
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
@@ -28,6 +28,7 @@ CLASSIFIERS = [
     RandomForestClassifier,
 ]
 
+
 RF_PARAM_GRID = {'bootstrap': [True],
                  'max_depth': [80, 90, 100, 110],
                  'max_features': [2, 3],
@@ -39,7 +40,7 @@ RF_PARAM_GRID = {'bootstrap': [True],
 
 def optimize(model, train_features, train_labels, param_grid=None):
     if param_grid is None:
-        if isinstance(model, RandomForestClassifier):
+        if isinstance(model, RandomForestClassifier) or isinstance(model, RandomForestRegressor):
             param_grid = RF_PARAM_GRID
     grid_search = GridSearchCV(estimator=model, param_grid=param_grid,
                                cv=3, n_jobs=-1, verbose=2)
