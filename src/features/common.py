@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 TARGET = "Distance"
@@ -36,3 +37,20 @@ def postproc_default(feats, encoders={}):
 def get_predictors_default(dataset):
     return [col for col in dataset.columns
             if col not in ['Distance', 'fileid', 'CoarseGrain']]
+
+
+def read_bluetooth_histogram_from_file(fp, _min=-100, _max=-30):
+    rssi_list = read_bluetooth_from_file(fp)
+    bins = np.arange(_min, _max)
+    counts, _ = np.histogram(rssi_list, bins=bins, density=True)
+    center = (bins[:-1] + bins[1:]) / 2
+    return {f"Hist_{-rssi}": count for count, rssi in zip(counts, center)}
+
+
+def read_bluetooth_from_file(fp):
+    rssi_list = []
+    for line in open(fp).read().split('\n'):
+        if 'Bluetooth' in line:
+            t, _, rssi = line.split(",")
+            rssi_list.append(float(rssi))
+    return rssi_list
