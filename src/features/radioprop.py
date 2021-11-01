@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
-
-from src.features.common import read_bluetooth_from_file
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
+from src.features.common import read_bluetooth_from_file, to_histogram
+from tqdm import tqdm
+from sklearn.pipeline import Pipeline
 
 
 def linear_approximation_model(rssi, TX=-61.02, N=2.187):
@@ -19,7 +21,7 @@ def inverted_friis_free_space_model(rssi, Pt_dBm=0., Gt_dBi=1., Gr_dBi=1., f=2.4
     # P_t : power of the transmitted signal (dBm)
     # G_r : gain of receiver antenna (dBi)
     # G_t : gain of transmitter antenna (dBi)
-    # f   : Frequency (2.4 GHz)
+    # f   : Frequency (2.4 GHz) 2402-2480
     # lambda :Wavelength of the carrier (meters) 2.4 GHz => 0.124876 m
     # L   : Other losses (loss at the antenna, transmission line attenuation, loss at various
     #       filters etc.)
@@ -61,11 +63,49 @@ def extract_features(filepath, key, tunables={}):
     features.update({
         'DistanceFloat': float(key.distance_in_meters),
         'Distance': str(key.distance_in_meters),
-        'CoarseGrain': key.coarse_grain,
+        'CoarseGrain': 0 if key.coarse_grain == "Y" else 1,
         'fileid': key.fileid
     })
     return features
 
 
-def postproc_feature_dicts(feats, encoders={}, tunables={}):
-    return pd.DataFrame(feats), encoders
+def postproc_feature_dicts(feats, pipe=None, tunables={}, verbose=False):
+    postproc_features = []
+    pbar = tqdm(feats) if verbose else feats
+    for feat in pbar:
+        row = {}
+        for model_name in ["LinearApprox", "Friis", "LogNormal"]:
+            _hist = to_histogram(
+                feat[model_name], _min=0.1, _max=5., bin_count=50)
+            _hist_updated = {
+                f"{model_name}:{hkey}": rssi for hkey, rssi in _hist.items()}
+            row.update(_hist_updated)
+        row.update({
+            fkey: feat[fkey] for fkey in ["CoarseGrain", "DistanceFloat"]
+        })
+        postproc_features.append(row)
+        if verbose:
+            pbar.set_description(f"Post-processing: {feat['fileid']}")
+
+    df = pd.DataFrame(postproc_features).fillna(0.)
+    distance_float = df["DistanceFloat"]
+    feat_cols = [col for col in row.keys()]
+    if not pipe:
+        pipe = Pipeline([("robustScalar", RobustScaler()),
+                        ("minMaxScalar", MinMaxScaler())])
+    df_scaled = pd.DataFrame(pipe.fit_transform(
+        df[feat_cols]), columns=feat_cols)
+    df_scaled['DistanceFloat'] = distance_float
+    return df_scaled, pipe
+
+
+def compress_hyperparams(tunables):
+    _extracted = {}
+    for name, value in tunables.items():
+        if "." in name:
+            prefix, param_name = name.split(".")
+            if prefix not in _extracted:
+                _extracted[prefix] = {}
+            _extracted[prefix][param_name] = value
+
+    return _extracted
