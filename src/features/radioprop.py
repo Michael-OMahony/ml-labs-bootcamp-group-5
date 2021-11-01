@@ -49,13 +49,6 @@ def extract_features(filepath, key, tunables={}):
         "Friis": inverted_friis_free_space_model,
         "LogNormal": inverted_log_normal_shadowing_model
     }
-    # if len(tunables) == 0:
-    #    tunables = {
-    #        "LinearApprox": {"TX": -61.02, "N": 2.187},
-    #        "Friis": dict(Pt_dBm=0., Gt_dBi=1., Gr_dBi=1., f=2.4e9, L=1., n=2.),
-    #        "LogNormal": dict(t_dBm=-20., Gt_dBi=1., Gr_dBi=1.,
-    #                          f=2.4e9, d0=1., L=1., sigma=2., n=2)
-    #    }
     features = {}
     for rf_model, fn in rf_prop_models.items():
         features[rf_model] = fn(rssiv, **tunables[rf_model])
@@ -67,6 +60,29 @@ def extract_features(filepath, key, tunables={}):
         'fileid': key.fileid
     })
     return features
+
+
+def extract_features_from_array(_array, tunables={}):
+    rf_prop_models = {
+        "LinearApprox": linear_approximation_model,
+        "Friis": inverted_friis_free_space_model,
+        "LogNormal": inverted_log_normal_shadowing_model
+    }
+    features = {}
+    for rf_model, fn in rf_prop_models.items():
+        features[rf_model] = fn(_array, **tunables[rf_model])
+    return features
+
+
+def postproc_row(row):
+    updated_row = {}
+    for model_name in ["LinearApprox", "Friis", "LogNormal"]:
+        _hist = to_histogram(
+            row[model_name], _min=0.1, _max=5., bin_count=50)
+        hist_updated = {
+            f"{model_name}:{hkey}": rssi for hkey, rssi in _hist.items()}
+        updated_row.update(hist_updated)
+    return updated_row
 
 
 def postproc_feature_dicts(feats, pipe=None, tunables={}, verbose=False):
@@ -93,8 +109,11 @@ def postproc_feature_dicts(feats, pipe=None, tunables={}, verbose=False):
     if not pipe:
         pipe = Pipeline([("robustScalar", RobustScaler()),
                         ("minMaxScalar", MinMaxScaler())])
-    df_scaled = pd.DataFrame(pipe.fit_transform(
-        df[feat_cols]), columns=feat_cols)
+        df_scaled = pd.DataFrame(pipe.fit_transform(
+            df[feat_cols]), columns=feat_cols)
+    else:
+        df_scaled = pd.DataFrame(pipe.transform(
+            df[feat_cols]), columns=feat_cols)
     df_scaled['DistanceFloat'] = distance_float
     return df_scaled, pipe
 
