@@ -47,6 +47,13 @@ def read_bluetooth_histogram_from_file(fp, _min=-100, _max=-30):
     return {f"Hist_{-rssi}": count for count, rssi in zip(counts, center)}
 
 
+def to_histogram(_array, _min=-100, _max=-30, bin_count=50):
+    bins = np.linspace(_min, _max, bin_count)
+    counts, _ = np.histogram(_array, bins=bins)
+    center = (bins[:-1] + bins[1:]) / 2
+    return {f"Hist_{value:.2f}": count for count, value in zip(counts, center)}
+
+
 def read_bluetooth_from_file(fp):
     rssi_list = []
     for line in open(fp).read().split('\n'):
