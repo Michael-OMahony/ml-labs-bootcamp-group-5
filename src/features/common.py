@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+from sklearn.pipeline import Pipeline
+
+from sklearn.preprocessing import RobustScaler, MinMaxScaler
 
 TARGET = "Distance"
 
@@ -30,8 +33,8 @@ def read_chirp_sequence_from_file(filepath, max_chirps=None):
     return [pd.DataFrame(chirp) for chirp in chirps]
 
 
-def postproc_default(feats, encoders={}):
-    return pd.DataFrame(feats), encoders
+def postproc_default(feats, pipe=None, tunables={}, verbose=False):
+    return pd.DataFrame(feats), pipe
 
 
 def get_predictors_default(dataset):
@@ -61,3 +64,31 @@ def read_bluetooth_from_file(fp):
             t, _, rssi = line.split(",")
             rssi_list.append(float(rssi))
     return rssi_list
+
+
+def postproc_bluetooth_histogram(feats, pipe=None, tunables={}, verbose=False):
+    return scale_histogram_features(
+        pd.DataFrame(feats), pipe=pipe
+    )
+
+
+def feature_bluetooth_histogram(fp, key, tunables={}):
+    features = to_histogram(
+        np.array(read_bluetooth_from_file(fp)),
+        _min=-100, _max=-30, bin_count=70)
+    features["Distance"] = str(key.distance_in_meters)
+    return features
+
+
+def scale_histogram_features(df, pipe=None):
+    feat_cols = [col for col in df.columns if 'Hist' in col]
+    if not pipe:
+        pipe = Pipeline([("robustScalar", RobustScaler()),
+                        ("minMaxScalar", MinMaxScaler())])
+        df_scaled = pd.DataFrame(pipe.fit_transform(
+            df[feat_cols]), columns=feat_cols)
+    else:
+        df_scaled = pd.DataFrame(pipe.transform(
+            df[feat_cols]), columns=feat_cols)
+    df_scaled["Distance"] = df["Distance"]
+    return df_scaled, pipe
