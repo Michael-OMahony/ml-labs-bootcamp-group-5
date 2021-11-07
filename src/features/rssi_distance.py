@@ -43,5 +43,5 @@ def extract_feature2(filepath, key, tunables={}):
     }
 
 
-def postproc_feature_dicts(feats, encoders={}, tunables={}):
-    return pd.DataFrame(feats), encoders
+def postproc_feature_dicts(feats, pipe=None, tunables={}, verbose=False):
+    return pd.DataFrame(feats), pipe
