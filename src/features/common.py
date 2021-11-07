@@ -30,13 +30,16 @@ def read_chirp_sequence_from_file(filepath, max_chirps=None):
     return [pd.DataFrame(chirp) for chirp in chirps]
 
 
-def postproc_default(feats, encoders={}):
-    return pd.DataFrame(feats), encoders
+def postproc_default(feats, pipe=None, tunables={}, verbose=False):
+    return pd.DataFrame(feats), pipe
 
 
 def get_predictors_default(dataset):
-    return [col for col in dataset.columns
-            if col not in ['Distance', 'fileid', 'CoarseGrain']]
+    return [
+        col
+        for col in dataset.columns
+        if col not in ["Distance", "fileid", "CoarseGrain"]
+    ]
 
 
 def read_bluetooth_histogram_from_file(fp, _min=-100, _max=-30):
@@ -56,8 +59,8 @@ def to_histogram(_array, _min=-100, _max=-30, bin_count=50):
 
 def read_bluetooth_from_file(fp):
     rssi_list = []
-    for line in open(fp).read().split('\n'):
-        if 'Bluetooth' in line:
+    for line in open(fp).read().split("\n"):
+        if "Bluetooth" in line:
             t, _, rssi = line.split(",")
             rssi_list.append(float(rssi))
     return rssi_list
