@@ -2,9 +2,14 @@ import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.metrics import classification_report
 
+from src.hyperopt import optimize
 
-def fit_rf(X, y):
+
+def fit_rf(X, y, optimize_params=False):
     rf = RandomForestClassifier()
+    if optimize_params:
+        best_estim_ = optimize(rf, X, y)
+        return best_estim_
     rf.fit(X, y)
     return rf
 
@@ -18,23 +23,27 @@ def generate_submission_output(trainset, devset, predictors, target, model=None)
     if model is None:
         model = fit_rf(trainset[predictors], trainset[target])
     ypred = model.predict(devset[predictors])
-    devset_system_output = pd.DataFrame({"fileid": devset["fileid"], "distance": ypred})
+    devset_system_output = pd.DataFrame(
+        {"fileid": devset["fileid"], "distance": ypred})
     devset_system_output.to_csv(
         "data/system_output/dev_system_output.tsv", sep="\t", index=False
     )
     return devset_system_output
 
 
-def dual_evaluation(trainset, devset, predictors, target, save_system_output=True):
+def dual_evaluation(trainset, devset, predictors, target,
+                    save_system_output=True, optimize_params=False):
     report, predictions = {}, {}
     for cg in [0, 1]:
         _trainset = trainset[trainset["CoarseGrain"] == cg]
         _devset = devset[devset["CoarseGrain"] == cg]
 
-        _model = fit_rf(_trainset[predictors], _trainset[target])
+        _model = fit_rf(
+            _trainset[predictors], _trainset[target], optimize_params=optimize_params)
         _ypred = _model.predict(_devset[predictors])
         predictions.update(
-            {fileid: pred for fileid, pred in zip(_devset.fileid.values, _ypred)}
+            {fileid: pred for fileid, pred in zip(
+                _devset.fileid.values, _ypred)}
         )
         report[f"cg={cg}"] = classification_report(_devset[target], _ypred)
     devset_system_output = pd.DataFrame(
@@ -52,7 +61,8 @@ def dual_evaluation(trainset, devset, predictors, target, save_system_output=Tru
 
 def evaluate_prediction(devset, prediction, save_system_output=True):
     report = classification_report(devset.Distance, prediction)
-    system_output = pd.DataFrame({"fileid": devset["fileid"], "distance": prediction})
+    system_output = pd.DataFrame(
+        {"fileid": devset["fileid"], "distance": prediction})
     if save_system_output:
         system_output.to_csv(
             "data/system_output/dev_system_output.tsv", sep="\t", index=False
