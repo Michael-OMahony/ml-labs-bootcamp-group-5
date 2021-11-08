@@ -5,7 +5,7 @@ from src.dataset.common import train_key_fp, test_key_fp, dev_key_fp
 import pandas as pd
 
 
-def make_datasets(feature_fn, postproc_fn, tunables, verbose=False):
+def make_datasets(feature_fn, postproc_fn, tunables, verbose=False, testing=0):
     def make_dataset(folder, key, pipe=None):
         return aggregate_features_from_folder(
             folder,
@@ -15,7 +15,7 @@ def make_datasets(feature_fn, postproc_fn, tunables, verbose=False):
             pipe=pipe,
             tunables=tunables,
             verbose=verbose,
-            testing=0,
+            testing=testing,
         )
 
     train, pipe = make_dataset(train_dir, pd.read_csv(train_key_fp, sep="\t"))
