@@ -43,9 +43,11 @@ def postproc_basic(feats, pipe=None, tunables={}, verbose=False):
         pipe = Pipeline(
             [("robustScalar", RobustScaler()), ("minMaxScalar", MinMaxScaler())]
         )
-        df_scaled = pd.DataFrame(pipe.fit_transform(df[feat_cols]), columns=feat_cols)
+        df_scaled = pd.DataFrame(pipe.fit_transform(
+            df[feat_cols]), columns=feat_cols)
     else:
-        df_scaled = pd.DataFrame(pipe.transform(df[feat_cols]), columns=feat_cols)
+        df_scaled = pd.DataFrame(pipe.transform(
+            df[feat_cols]), columns=feat_cols)
     for col in df.columns:
         if col not in feat_cols:
             df_scaled[col] = df[col]
@@ -82,3 +84,13 @@ def read_bluetooth_from_file(fp):
             t, _, rssi = line.split(",")
             rssi_list.append(float(rssi))
     return rssi_list
+
+
+def read_non_sensor_data(fp, key, **kwargs):
+    lines = open(fp).read().split("\n")[:7]
+    nsdata = {}
+    for line in lines:
+        _key, value = line.split(",")
+        nsdata["Meta:" + _key] = value
+
+    return nsdata

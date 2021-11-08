@@ -22,12 +22,14 @@ def aggregate_features_from_folder(
     sample_size = min(testing, key.shape[0])
     _key = key.sample(sample_size) if testing > 0 else key
     iterate_through = (
-        tqdm(_key.iterrows(), total=_key.shape[0]) if verbose else _key.iterrows()
+        tqdm(_key.iterrows(),
+             total=_key.shape[0]) if verbose else _key.iterrows()
     )
     for _, row in iterate_through:
         filepath = os.path.join(folder, row.fileid)
         features.append(feat_fn(filepath, row, tunables=tunables))
-    df, pipe = postproc_fn(features, pipe=pipe, tunables=tunables, verbose=verbose)
+    df, pipe = postproc_fn(features, pipe=pipe,
+                           tunables=tunables, verbose=verbose)
     if isinstance(predictors, type(None)):
         return df, pipe
     if not isinstance(predictors, type([6, 9])):
@@ -56,3 +58,11 @@ def compose(f1, f2):
         return f2(f1(*args, **kwargs), **kwargs)
 
     return composite_fn
+
+
+def combine(f1, f2):
+
+    def merge_fn(*args, **kwargs):
+        return f1(*args, **kwargs) | f2(*args, **kwargs)
+
+    return merge_fn
