@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
 
 TARGET = "Distance"
 
@@ -32,6 +34,22 @@ def read_chirp_sequence_from_file(filepath, max_chirps=None):
 
 def postproc_default(feats, pipe=None, tunables={}, verbose=False):
     return pd.DataFrame(feats), pipe
+
+
+def postproc_basic(feats, pipe=None, tunables={}, verbose=False):
+    df = pd.DataFrame(feats).fillna(0.0)
+    feat_cols = [col for col in df.columns if "rssi" in col.lower()]
+    if not pipe:
+        pipe = Pipeline(
+            [("robustScalar", RobustScaler()), ("minMaxScalar", MinMaxScaler())]
+        )
+        df_scaled = pd.DataFrame(pipe.fit_transform(df[feat_cols]), columns=feat_cols)
+    else:
+        df_scaled = pd.DataFrame(pipe.transform(df[feat_cols]), columns=feat_cols)
+    for col in df.columns:
+        if col not in feat_cols:
+            df_scaled[col] = df[col]
+    return df_scaled, pipe
 
 
 def get_predictors_default(dataset):
