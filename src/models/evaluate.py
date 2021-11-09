@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 
 from src.hyperopt import optimize
@@ -31,25 +31,28 @@ def generate_submission_output(trainset, devset, predictors, target, model=None)
     return devset_system_output
 
 
-def dual_evaluation(trainset, devset, predictors, target,
+def dual_evaluation(trainset, testset, predictors, target,
                     save_system_output=True, optimize_params=False):
     report, predictions = {}, {}
     for cg in [0, 1]:
         _trainset = trainset[trainset["CoarseGrain"] == cg]
-        _devset = devset[devset["CoarseGrain"] == cg]
+        _testset = testset[testset["CoarseGrain"] == cg]
 
         _model = fit_rf(
             _trainset[predictors], _trainset[target], optimize_params=optimize_params)
-        _ypred = _model.predict(_devset[predictors])
+        _ypred = _model.predict(_testset[predictors])
         predictions.update(
             {fileid: pred for fileid, pred in zip(
-                _devset.fileid.values, _ypred)}
+                _testset.fileid.values, _ypred)}
         )
-        report[f"cg={cg}"] = classification_report(_devset[target], _ypred)
+        report[f"cg={cg}"] = classification_report(_testset[target], _ypred)
+        report[f"model:cg={cg}"] = _model
+        report[f"trainset:cg={cg}"] = _trainset
+        report[f"testset:cg={cg}"] = _testset
     devset_system_output = pd.DataFrame(
         {
-            "fileid": devset["fileid"],
-            "distance": devset.apply(lambda row: predictions[row.fileid], axis=1),
+            "fileid": testset["fileid"],
+            "distance": testset.apply(lambda row: predictions[row.fileid], axis=1),
         }
     )
     if save_system_output:
