@@ -36,6 +36,24 @@ def postproc_default(feats, pipe=None, tunables={}, verbose=False):
     return pd.DataFrame(feats), pipe
 
 
+def postproc_categorical(feats, pipe=None, tunables={}, verbose=False):
+    df = pd.DataFrame(feats).fillna(0.0)
+    # get categorical columns
+    catcols = [col for col in df.columns if "cat:" in col.lower()]
+    if not pipe:
+        if verbose:
+            print("NO Pipe input given!")
+        encoder = tunables["CategoricalEncoder"]
+        pipe = encoder(cols=catcols)
+        pipe.fit(df[catcols], df["DistanceFloat"])
+        encoded = pipe.transform(df[catcols])
+    else:
+        if verbose:
+            print("Pipe input given!")
+        encoded = pipe.transform(df[catcols])
+    return pd.concat([df, encoded], axis=1), pipe
+
+
 def postproc_basic(feats, pipe=None, tunables={}, verbose=False):
     df = pd.DataFrame(feats).fillna(0.0)
     feat_cols = [col for col in df.columns if "rssi" in col.lower()]
@@ -91,6 +109,6 @@ def read_non_sensor_data(fp, key, **kwargs):
     nsdata = {}
     for line in lines:
         _key, value = line.split(",")
-        nsdata["Meta:" + _key] = value
+        nsdata["Cat:" + _key] = value
 
     return nsdata
