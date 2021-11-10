@@ -3,7 +3,18 @@ from src.features.common import read_bluetooth_from_file
 
 
 def features(fp, key, tunables={}):
+    features = {
+        "CoarseGrain": 0 if key.coarse_grain == "Y" else 1,
+        "fileid": key.fileid,
+        "Distance": str(key.distance_in_meters),
+        "DistanceFloat": float(key.distance_in_meters),
+    }
     rssi = np.array(read_bluetooth_from_file(fp))
+    features.update(bluetooth_extended_summary(rssi))
+    return features
+
+
+def bluetooth_extended_summary(rssi):
     return {
         "RssiMin": rssi.min(),
         "RssiPercentile:1": np.percentile(rssi, 1.),
@@ -18,10 +29,6 @@ def features(fp, key, tunables={}):
         "RssiPercentile:95": np.percentile(rssi, 95.),
         "RssiPercentile:99": np.percentile(rssi, 99.),
         "RssiMax": rssi.max(),
-        "CoarseGrain": 0 if key.coarse_grain == "Y" else 1,
-        "fileid": key.fileid,
-        "Distance": str(key.distance_in_meters),
-        "DistanceFloat": float(key.distance_in_meters),
     }
 
 
