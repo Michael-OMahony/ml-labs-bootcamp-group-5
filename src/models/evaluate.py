@@ -1,7 +1,8 @@
+import os
+
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
-
 from src.hyperopt import optimize
 
 
@@ -32,7 +33,7 @@ def generate_submission_output(trainset, testset, predictors, target, model=None
 
 
 def dual_evaluation(trainset, testset, predictors, target, seed=0,
-                    save_system_output=True, optimize_params=False):
+                    save_system_output=False, optimize_params=False):
     report, predictions = {}, {}
     for cg in [0, 1]:
         _trainset = trainset[trainset["CoarseGrain"] == cg]
@@ -57,18 +58,11 @@ def dual_evaluation(trainset, testset, predictors, target, seed=0,
         }
     )
     if save_system_output:
+        sysout_dir = "data/system_output/"
+        if not os.path.isdir(sysout_dir):
+            os.mkdir(sysout_dir)
         devset_system_output.to_csv(
-            "data/system_output/dev_system_output.tsv", sep="\t", index=False
+            os.path.join(sysout_dir, "test_system_output.tsv"),
+            sep="\t", index=False
         )
     return report, devset_system_output
-
-
-def evaluate_prediction(devset, prediction, save_system_output=True):
-    report = classification_report(devset.Distance, prediction)
-    system_output = pd.DataFrame(
-        {"fileid": devset["fileid"], "distance": prediction})
-    if save_system_output:
-        system_output.to_csv(
-            "data/system_output/dev_system_output.tsv", sep="\t", index=False
-        )
-    return report, system_output
