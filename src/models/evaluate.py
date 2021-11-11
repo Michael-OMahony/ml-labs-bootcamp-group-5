@@ -19,16 +19,16 @@ def evaluate(model, X, y):
     return classification_report(y, ypred)
 
 
-def generate_submission_output(trainset, devset, predictors, target, model=None):
+def generate_submission_output(trainset, testset, predictors, target, model=None):
     if model is None:
         model = fit_rf(trainset[predictors], trainset[target])
-    ypred = model.predict(devset[predictors])
-    devset_system_output = pd.DataFrame(
-        {"fileid": devset["fileid"], "distance": ypred})
-    devset_system_output.to_csv(
-        "data/system_output/dev_system_output.tsv", sep="\t", index=False
+    ypred = model.predict(testset[predictors])
+    testset_system_output = pd.DataFrame(
+        {"fileid": testset["fileid"], "distance": ypred})
+    testset_system_output.to_csv(
+        "data/system_output/test_system_output.tsv", sep="\t", index=False
     )
-    return devset_system_output
+    return testset_system_output
 
 
 def dual_evaluation(trainset, testset, predictors, target,

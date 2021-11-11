@@ -33,7 +33,7 @@ def read_chirp_sequence_from_file(filepath, max_chirps=None):
 
 
 def postproc_default(feats, pipe=None, tunables={}, verbose=False):
-    return pd.DataFrame(feats), pipe
+    return pd.DataFrame(feats).fillna(0.), pipe
 
 
 def postproc_categorical(feats, pipe=None, tunables={}, verbose=False):
@@ -112,3 +112,40 @@ def read_non_sensor_data(fp, key, **kwargs):
         nsdata["Cat:" + _key] = value
 
     return nsdata
+
+
+def read_sensors_from_file(fp):
+    readings = {}
+    for line in open(fp).read().split("\n"):
+        if not line.strip() or "Activity" in line:
+            continue
+        if "Bluetooth" in line:
+            if "Bluetooth" not in readings:
+                readings["Bluetooth"] = []
+            readings["Bluetooth"].append(float(line.split(",")[-1]))
+        elif "Heading" in line:
+            items = line.split(',')
+            sensor_type = items[1]
+            assert len(items) == 8
+            suffixes = ["x1", "y1", "z1", "x2", "y2", "z2"]
+            for suffix, scalar in zip(suffixes, items[2:]):
+                name = sensor_type + "_" + suffix
+                if name not in readings:
+                    readings[name] = []
+                readings[name].append(float(scalar))
+        else:
+            suffixes = ["x", "y", "z"]
+            items = line.split(',')
+            sensor_type = items[1]
+            for suffix, scalar in zip(suffixes, items[2:]):
+                name = sensor_type + "_" + suffix
+                if name not in readings:
+                    readings[name] = []
+                readings[name].append(float(scalar))
+    return readings
+
+
+def read_other_sensors_from_file(fp):
+    readings = read_sensors_from_file(fp)
+    del readings["Bluetooth"]
+    return readings
