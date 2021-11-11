@@ -16,19 +16,19 @@ def features(fp, key, tunables={}):
 
 def bluetooth_extended_summary(rssi):
     return {
-        "RssiMin": rssi.min(),
-        "RssiPercentile:1": np.percentile(rssi, 1.),
-        "RssiPercentile:5": np.percentile(rssi, 5.),
-        "RssiPercentile:10": np.percentile(rssi, 10.),
-        "RssiPercentile:25": np.percentile(rssi, 25.),
-        "RssiPercentile:40": np.percentile(rssi, 40.),
-        "RssiMean": rssi.mean(),
-        "RssiPercentile:65": np.percentile(rssi, 65.),
-        "RssiPercentile:80": np.percentile(rssi, 80.),
-        "RssiPercentile:90": np.percentile(rssi, 90.),
-        "RssiPercentile:95": np.percentile(rssi, 95.),
-        "RssiPercentile:99": np.percentile(rssi, 99.),
-        "RssiMax": rssi.max(),
+        "Bluetooth:Min": rssi.min(),
+        "Bluetooth:Percentile_1": np.percentile(rssi, 1.),
+        "Bluetooth:Percentile_5": np.percentile(rssi, 5.),
+        "Bluetooth:Percentile_10": np.percentile(rssi, 10.),
+        "Bluetooth:Percentile_25": np.percentile(rssi, 25.),
+        "Bluetooth:Percentile_40": np.percentile(rssi, 40.),
+        "Bluetooth:Mean": rssi.mean(),
+        "Bluetooth:Percentile_65": np.percentile(rssi, 65.),
+        "Bluetooth:Percentile_80": np.percentile(rssi, 80.),
+        "Bluetooth:Percentile_90": np.percentile(rssi, 90.),
+        "Bluetooth:Percentile_95": np.percentile(rssi, 95.),
+        "Bluetooth:Percentile_99": np.percentile(rssi, 99.),
+        "Bluetooth:Max": rssi.max(),
     }
 
 
