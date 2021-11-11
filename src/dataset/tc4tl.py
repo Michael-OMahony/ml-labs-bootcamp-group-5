@@ -23,4 +23,4 @@ def make_datasets(feature_fn, postproc_fn, tunables, verbose=False, testing=0):
     test, _ = make_dataset(test_dir, pd.read_csv(
         test_key_fp, sep="\t"), pipe=pipe)
 
-    return train, dev, test
+    return (train, dev, test), pipe
