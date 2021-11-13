@@ -1,17 +1,17 @@
 import pandas as pd
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.metrics import classification_report
 
 from src.hyperopt import optimize
 
 
-def fit_gb(X, y, optimize_params=False):
-    gb = GradientBoostingClassifier(random_state=15)
+def fit_xt(X, y, optimize_params=False):
+    xt = ExtraTreesClassifier(random_state=15)
     if optimize_params:
-        best_estim_ = optimize(gb, X, y)
+        best_estim_ = optimize(xt, X, y)
         return best_estim_
-    gb.fit(X, y)
-    return gb
+    xt.fit(X, y)
+    return xt
 
 
 def evaluate(model, X, y):
@@ -21,7 +21,7 @@ def evaluate(model, X, y):
 
 def generate_submission_output(trainset, devset, predictors, target, model=None):
     if model is None:
-        model = fit_gb(trainset[predictors], trainset[target])
+        model = fit_xt(trainset[predictors], trainset[target])
     ypred = model.predict(devset[predictors])
     devset_system_output = pd.DataFrame(
         {"fileid": devset["fileid"], "distance": ypred})
@@ -38,7 +38,7 @@ def dual_evaluation(trainset, testset, predictors, target,
         _trainset = trainset[trainset["CoarseGrain"] == cg]
         _testset = testset[testset["CoarseGrain"] == cg]
 
-        _model = fit_gb(
+        _model = fit_xt(
             _trainset[predictors], _trainset[target], optimize_params=optimize_params)
         _ypred = _model.predict(_testset[predictors])
         predictions.update(
