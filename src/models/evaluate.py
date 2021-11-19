@@ -6,13 +6,14 @@ from sklearn.metrics import classification_report
 from src.hyperopt import optimize
 
 
-def fit_rf(X, y, optimize_params=False, seed=0):
-    rf = RandomForestClassifier(random_state=seed)
+def fit_rf(X, y, optimize_params=False, seed=0, model=None):
+    if model is None:
+        model = RandomForestClassifier(random_state=seed)
     if optimize_params:
-        best_estim_ = optimize(rf, X, y)
+        best_estim_ = optimize(model, X, y)
         return best_estim_
-    rf.fit(X, y)
-    return rf
+    model.fit(X, y)
+    return model
 
 
 def evaluate(model, X, y):
@@ -33,7 +34,7 @@ def generate_submission_output(trainset, testset, predictors, target, model=None
 
 
 def dual_evaluation(trainset, testset, predictors, target, seed=0,
-                    save_system_output=False, optimize_params=False):
+                    save_system_output=False, optimize_params=False, model=None):
     report, predictions = {}, {}
     for cg in [0, 1]:
         _trainset = trainset[trainset["CoarseGrain"] == cg]
@@ -41,7 +42,7 @@ def dual_evaluation(trainset, testset, predictors, target, seed=0,
 
         _model = fit_rf(
             _trainset[predictors], _trainset[target], optimize_params=optimize_params,
-            seed=seed)
+            seed=seed, model=model)
         _ypred = _model.predict(_testset[predictors])
         predictions.update(
             {fileid: pred for fileid, pred in zip(

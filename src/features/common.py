@@ -51,7 +51,11 @@ def postproc_categorical(feats, pipe=None, tunables={}, verbose=False):
         if verbose:
             print("Pipe input given!")
         encoded = pipe.transform(df[catcols])
-    return pd.concat([df, encoded], axis=1), pipe
+
+    for col in df.columns:
+        if col not in encoded.columns:
+            encoded[col] = df[col]
+    return encoded, pipe
 
 
 def postproc_basic(feats, pipe=None, tunables={}, verbose=False):
