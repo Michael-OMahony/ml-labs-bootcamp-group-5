@@ -9,3 +9,4 @@ pytest==6.2.5
 hyperopt==0.2.5
 mlxtend==0.19.0
 categorical_encoders==2.3.0
+seaborn==0.11.2
